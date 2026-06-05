@@ -59,7 +59,7 @@ npx wrangler pages deploy dist --project-name=json-viewer
 First deploy creates the project. Subsequent deploys push to the same project. After the command finishes you'll get a URL like:
 
 ```
-https://json-viewer.pages.dev
+https://jsononlineviewer.com
 ```
 
 For branch-based deploys (preview branches), use:
