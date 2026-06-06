@@ -87,8 +87,9 @@ button { font-family: inherit; cursor: pointer; }
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
+  flex-shrink: 1;
   overflow: hidden;
 }
 
@@ -568,37 +569,15 @@ button { font-family: inherit; cursor: pointer; }
   .about-inner { font-size: 15px; line-height: 1.7; }
 }
 
-/* ============ FAQ ============ */
-.faq {
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  padding: 56px 20px 72px;
-}
-.faq-inner {
-  max-width: 880px;
-  margin: 0 auto;
-}
-.faq-title {
-  font-size: 28px;
-  line-height: 1.25;
-  margin: 0 0 12px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text);
-}
-.faq-lead {
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--text-muted);
-  margin: 0 0 28px;
-}
+/* ============ FAQ (used on /faq page) ============ */
 .faq-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: 8px;
 }
 .faq-item {
-  background: var(--surface);
+  background: var(--surface-alt);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -607,6 +586,7 @@ button { font-family: inherit; cursor: pointer; }
 .faq-item[open] {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-sm);
+  background: var(--surface);
 }
 .faq-q {
   cursor: pointer;
@@ -675,8 +655,6 @@ button { font-family: inherit; cursor: pointer; }
 .faq-steps li { line-height: 1.65; }
 
 @media (max-width: 640px) {
-  .faq { padding: 40px 16px 56px; }
-  .faq-title { font-size: 23px; }
   .faq-q { padding: 14px 16px; font-size: 15px; }
   .faq-a { padding: 0 16px 16px; font-size: 14px; }
 }
@@ -919,6 +897,88 @@ button { font-family: inherit; cursor: pointer; }
 }
 @media (max-width: 480px) {
   .footer-cols { grid-template-columns: 1fr 1fr; }
+}
+
+/* ============ Top Navbar ============ */
+.navbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+.navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+.navbar-brand:hover { color: var(--text); }
+.navbar-brand .brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: #fff;
+  border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+.navbar-brand-text { white-space: nowrap; }
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.navbar-link {
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+.navbar-link:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.navbar-link.active {
+  background: var(--surface-alt);
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .navbar-inner { padding: 8px 14px; gap: 10px; }
+  .navbar-brand-text { display: none; }
+  .navbar-link { font-size: 13px; padding: 6px 9px; }
+}
+@media (max-width: 420px) {
+  .navbar-inner { padding: 8px 10px; }
+  .navbar-links { gap: 2px; justify-content: flex-end; }
+  .navbar-link { font-size: 12px; padding: 5px 7px; }
 }
 
 /* ============ Scroll hint (home page) ============ */
