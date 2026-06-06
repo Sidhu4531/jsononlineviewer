@@ -3,126 +3,79 @@ import Seo from '../components/Seo.jsx'
 
 export default function Terms() {
   return (
-    <>
+    <PageLayout
+      title="Terms & Conditions"
+      subtitle="The rules for using JSON Viewer."
+    >
       <Seo
-        title="Terms & Conditions — JSON Online Viewer | Usage Agreement"
-        description="Read the Terms and Conditions for using JSON Online Viewer. Free for personal and commercial use, no warranty, fair-use guidelines, and contact information."
-        keywords="json viewer terms, json viewer conditions, terms of service, usage agreement, free json tool terms"
-        canonical="https://jsononlineviewer.com/terms"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'WebPage',
-          name: 'Terms & Conditions — JSON Online Viewer',
-          url: 'https://jsononlineviewer.com/terms',
-        }}
-      />
-      <PageLayout
         title="Terms & Conditions"
-        subtitle="Last updated: June 5, 2026"
-      >
-        <p>
-          By accessing and using <strong>JSON Online Viewer</strong> (the "Service"), you
-          agree to be bound by these Terms & Conditions. If you do not agree, please do not
-          use the Service.
-        </p>
+        description="The terms and conditions for using JSON Viewer. The tool is free to use, provided as-is, with no warranty."
+        canonical="https://jsononlineviewer.com/terms"
+      />
 
-        <h2>1. The Service</h2>
-        <p>
-          JSON Online Viewer is a free, browser-based tool for formatting, validating, and
-          exploring JSON data. The Service is provided "as is" and "as available", without
-          warranty of any kind.
-        </p>
+      <p>
+        By using JSON Viewer you agree to the following simple terms. The tool is free, the
+        source is open, and we ask for nothing in return except that you don&apos;t use it
+        to do anything illegal.
+      </p>
 
-        <h2>2. License to Use</h2>
-        <p>
-          You may use the Service for personal, educational, and commercial purposes, free of
-          charge, without creating an account. You may bookmark the site, share links to it,
-          and integrate it into your documentation or workflow.
-        </p>
-        <p>
-          You may <strong>not</strong>:
-        </p>
-        <ul>
-          <li>
-            Use the Service to violate any applicable law, regulation, or third-party right.
-          </li>
-          <li>
-            Attempt to disrupt, overload, or compromise the integrity or performance of the
-            Service.
-          </li>
-          <li>
-            Scrape, mirror, or republish the Service in a way that suggests endorsement by us
-            without permission.
-          </li>
-          <li>
-            Use the Service to process data that you do not have the legal right to access.
-          </li>
-        </ul>
+      <h2>1. The service</h2>
+      <p>
+        JSON Viewer is a free, browser-based tool for formatting, validating and exploring
+        JSON data. It is provided as-is, with no warranty of any kind, and may be modified,
+        suspended, or discontinued at any time without notice.
+      </p>
 
-        <h2>3. Your Data</h2>
-        <p>
-          As described in our <a href="/privacy-policy">Privacy Policy</a>, your JSON input
-          is processed entirely in your browser and is not transmitted to us. You retain full
-          ownership and responsibility for any data you choose to view, format, or copy using
-          the Service.
-        </p>
+      <h2>2. Acceptable use</h2>
+      <p>You agree not to use the site to:</p>
+      <ul>
+        <li>Process data that you do not have the right to handle.</li>
+        <li>Attempt to disrupt, reverse-engineer, or overload the service.</li>
+        <li>Scrape, mirror, or republish the site in a way that misrepresents its origin.</li>
+        <li>Use the site for any unlawful purpose.</li>
+      </ul>
 
-        <h2>4. Intellectual Property</h2>
-        <p>
-          The Service, including its design, code, branding, and documentation, is owned by
-          the JSON Online Viewer team and is protected by copyright and other applicable laws.
-          You may not copy, redistribute, or create derivative works of the Service's source
-          code or branding without prior written permission.
-        </p>
+      <h2>3. Your data</h2>
+      <p>
+        You retain full ownership of any JSON you paste into the tool. We do not access,
+        store, or transmit it. See our <a href="/privacy-policy">Privacy Policy</a> for
+        details.
+      </p>
 
-        <h2>5. Third-Party Content</h2>
-        <p>
-          The Service may display links to third-party websites or resources. We are not
-          responsible for the content, accuracy, or practices of those third parties, and
-          inclusion of a link does not imply endorsement.
-        </p>
+      <h2>4. No warranty</h2>
+      <p>
+        The site is provided <strong>&quot;as is&quot;</strong> and <strong>&quot;as available&quot;</strong>{' '}
+        without any warranties, express or implied. We do not guarantee that the tool will
+        be uninterrupted, error-free, or that the results will be accurate for any specific
+        purpose. Always validate important data with a second tool.
+      </p>
 
-        <h2>6. Disclaimer of Warranties</h2>
-        <p>
-          THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF ANY KIND,
-          EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-          FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. WE DO NOT WARRANT THAT THE
-          SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR THAT IT WILL MEET YOUR REQUIREMENTS.
-        </p>
+      <h2>5. Limitation of liability</h2>
+      <p>
+        To the maximum extent permitted by law, the operators of JSON Viewer are not liable
+        for any indirect, incidental, special, consequential, or punitive damages arising
+        from your use of the site.
+      </p>
 
-        <h2>7. Limitation of Liability</h2>
-        <p>
-          TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE JSON ONLINE VIEWER
-          TEAM BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE
-          DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF DATA, PROFITS, OR GOODWILL, ARISING
-          OUT OF OR IN CONNECTION WITH YOUR USE OF THE SERVICE.
-        </p>
+      <h2>6. Changes</h2>
+      <p>
+        We may update these terms occasionally. Continued use of the site after changes
+        means you accept the new terms. The &quot;Last updated&quot; date below shows when
+        the most recent change was made.
+      </p>
 
-        <h2>8. Changes to the Service</h2>
-        <p>
-          We reserve the right to modify, suspend, or discontinue the Service, in whole or in
-          part, at any time and without notice. We will, where reasonable, post a notice on
-          the home page before any major change.
-        </p>
+      <h2>7. Governing law</h2>
+      <p>
+        These terms are governed by the laws of the jurisdiction in which the operator is
+        based, without regard to its conflict-of-laws principles.
+      </p>
 
-        <h2>9. Changes to These Terms</h2>
-        <p>
-          We may update these Terms from time to time. The "Last updated" date at the top
-          reflects the most recent change. Continued use of the Service after a change
-          constitutes acceptance of the updated Terms.
-        </p>
+      <h2>8. Contact</h2>
+      <p>
+        Questions about these terms? Use the <a href="/contact">contact page</a>.
+      </p>
 
-        <h2>10. Governing Law</h2>
-        <p>
-          These Terms are governed by the laws of the jurisdiction in which the operator of
-          the Service is established, without regard to conflict-of-laws principles.
-        </p>
-
-        <h2>11. Contact</h2>
-        <p>
-          For questions about these Terms, please visit our <a href="/contact">contact page</a>.
-        </p>
-      </PageLayout>
-    </>
+      <p><em>Last updated: January 2026.</em></p>
+    </PageLayout>
   )
 }

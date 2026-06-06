@@ -6,16 +6,18 @@ export default function Editor({ value, onChange, error }) {
 
   useEffect(() => {
     if (!taRef.current || !error) return
-    const lines = taRef.current.value.split('\n').slice(0, error.line - 1).join('\n')
-    const pos = lines.length + error.col
-    taRef.current.focus()
-    taRef.current.setSelectionRange(pos, pos)
+    try {
+      const lines = taRef.current.value.split('\n').slice(0, Math.max(0, error.line - 1)).join('\n')
+      const pos = Math.min(lines.length + (error.col || 1), taRef.current.value.length)
+      taRef.current.focus()
+      taRef.current.setSelectionRange(pos, pos)
+    } catch (_) {}
   }, [error])
 
   return (
     <div className="editor">
       <div className="editor-gutter" aria-hidden="true">
-        {Array.from({ length: lineCount }, (_, i) => (
+        {Array.from({ length: Math.max(lineCount, 1) }, (_, i) => (
           <div key={i} className="gutter-line">{i + 1}</div>
         ))}
       </div>
@@ -27,7 +29,7 @@ export default function Editor({ value, onChange, error }) {
         spellCheck={false}
         autoCorrect="off"
         autoCapitalize="off"
-        placeholder="Paste or type JSON here…"
+        placeholder='Paste or type JSON here, e.g. {"hello":"world"}'
       />
     </div>
   )

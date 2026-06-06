@@ -7,11 +7,10 @@ export function parseJSON(text) {
     return { ok: true, data, error: null, empty: false }
   } catch (e) {
     const msg = String(e?.message || e)
-    const m = msg.match(/position\s+(\d+)/i)
+    const pos = locateErrorPosition(text, msg)
     let line = 1
     let col = 1
-    if (m) {
-      const pos = parseInt(m[1], 10)
+    if (pos >= 0 && pos <= text.length) {
       const before = text.slice(0, pos)
       const lines = before.split('\n')
       line = lines.length
@@ -24,6 +23,28 @@ export function parseJSON(text) {
       empty: false
     }
   }
+}
+
+function locateErrorPosition(text, msg) {
+  // 1. Older V8 format: "at position N"
+  const m = msg.match(/position\s+(\d+)/i)
+  if (m) return parseInt(m[1], 10)
+
+  // 2. Newer V8 "Unexpected end of JSON input"
+  if (/Unexpected end of JSON input/i.test(msg)) return text.length
+
+  // 3. Newer V8 "Unexpected token X, "..." is not valid JSON"
+  const tokenMatch = msg.match(/Unexpected token ([\s\S]*?), "([\s\S]*?)" is not valid JSON/)
+  if (tokenMatch) {
+    const token = tokenMatch[1].replace(/^['"`]+|['"`]+$/g, '')
+    if (token) {
+      const idx = text.lastIndexOf(token)
+      if (idx >= 0) return idx
+    }
+  }
+
+  // 4. Fallback: end of input
+  return text.length
 }
 
 export function formatJSON(data, indent = 2) {
@@ -102,23 +123,28 @@ export function searchInJSON(data, query) {
   const q = query.toLowerCase()
   const matches = new Set()
   function walk(v, parts) {
-    const path = pathToString(parts).toLowerCase()
-    if (path.includes(q)) matches.add(path)
     if (v !== null && typeof v === 'object') {
       for (const [k, child] of Object.entries(v)) {
-        walk(child, [...parts, isNaN(k) ? k : Number(k)])
-        if (typeof child === 'string' && child.toLowerCase().includes(q)) {
-          matches.add(pathToString([...parts, isNaN(k) ? k : Number(k)]))
-        } else if (typeof child !== 'object' && child !== null && String(child).toLowerCase().includes(q)) {
-          matches.add(pathToString([...parts, isNaN(k) ? k : Number(k)]))
+        const isNumericKey = !Number.isNaN(Number(k))
+        const newParts = [...parts, isNumericKey ? Number(k) : k]
+        if (!isNumericKey && k.toLowerCase().includes(q)) {
+          matches.add(pathToString(newParts))
         }
+        walk(child, newParts)
+        matchValue(child, newParts)
       }
     } else {
-      if (typeof v === 'string' && v.toLowerCase().includes(q)) {
-        matches.add(path)
-      } else if (typeof v !== 'object' && v !== null && String(v).toLowerCase().includes(q)) {
-        matches.add(path)
-      }
+      matchValue(v, parts)
+    }
+  }
+  function matchValue(v, parts) {
+    const path = pathToString(parts)
+    if (v === null) {
+      if ('null'.includes(q)) matches.add(path)
+    } else if (typeof v === 'string') {
+      if (v.toLowerCase().includes(q)) matches.add(path)
+    } else if (typeof v !== 'object') {
+      if (String(v).toLowerCase().includes(q)) matches.add(path)
     }
   }
   walk(data, [])

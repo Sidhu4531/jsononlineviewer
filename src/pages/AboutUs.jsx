@@ -1,83 +1,68 @@
-import { Link } from 'react-router-dom'
 import PageLayout from '../components/PageLayout.jsx'
 import Seo from '../components/Seo.jsx'
 
 export default function AboutUs() {
   return (
-    <>
+    <PageLayout
+      title="About Us"
+      subtitle="Who we are and why we built this JSON viewer."
+    >
       <Seo
-        title="About Us — JSON Online Viewer | Free Browser-Based JSON Tool"
-        description="Learn about JSON Online Viewer, a free, privacy-first JSON formatter, validator and tree explorer built for developers. Meet the team, our mission, and the values behind the tool."
-        keywords="about json online viewer, json viewer team, json formatter company, free json tool, json viewer mission, about us"
-        canonical="https://jsononlineviewer.com/about-us"
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'AboutPage',
-          name: 'About Us — JSON Online Viewer',
-          url: 'https://jsononlineviewer.com/about-us',
-          description:
-            'Learn about JSON Online Viewer, a free privacy-first JSON formatter, validator and tree explorer built for developers.',
-        }}
-      />
-      <PageLayout
         title="About Us"
-        subtitle="Building the fastest, most private JSON tool on the web — for free."
-      >
-        <p>
-          <strong>JSON Online Viewer</strong> was started by a small team of developers who
-          were tired of slow, ad-laden, and privacy-hostile JSON tools. Every existing viewer
-          seemed to either require a sign-up, send your data to a remote server, or limit the
-          features you actually need. We built this site to fix that.
-        </p>
+        description="Learn about JSON Viewer — a free, fast, privacy-friendly browser tool for formatting, validating, and exploring JSON data."
+        canonical="https://jsononlineviewer.com/about-us"
+      />
 
-        <h2>Our Mission</h2>
-        <p>
-          Our mission is simple: make working with JSON faster, safer, and more delightful for
-          every developer, analyst, and learner on the web. We believe essential developer
-          tools should be <strong>free, private, and accessible to everyone</strong> — no
-          paywalls, no email gates, no tracking pixels.
-        </p>
+      <p>
+        <strong>JSON Viewer</strong> is a free, fast, privacy-friendly tool for anyone who
+        works with JSON data. It runs entirely in your browser &mdash; no account, no
+        upload, no tracking of your input.
+      </p>
 
-        <h2>What We Believe</h2>
-        <ul>
-          <li>
-            <strong>Privacy is non-negotiable.</strong> Your JSON never leaves your browser.
-            Every byte of parsing, formatting, and validation happens locally on your device.
-            We literally cannot see your data, and we do not want to.
-          </li>
-          <li>
-            <strong>Speed matters.</strong> A developer tool should feel instant. The site
-            loads in under a second, the editor responds as you type, and large documents stay
-            responsive because we only render the nodes you expand.
-          </li>
-          <li>
-            <strong>No dark patterns.</strong> No ads. No upsells. No "upgrade to Pro" banners
-            popping up over your JSON. Just the tool.
-          </li>
-          <li>
-            <strong>Standards-compliant validation.</strong> Strict JSON parsing, accurate
-            line-and-column error reporting, and full support for Unicode and large numbers.
-          </li>
-        </ul>
+      <h2>Why we built it</h2>
+      <p>
+        Most online JSON tools are bloated, full of ads, or quietly send your data to a
+        server. We wanted a single, fast page that does the four things developers actually
+        need: <strong>view</strong> JSON nicely, <strong>format</strong> minified data,{' '}
+        <strong>validate</strong> with helpful errors, and <strong>explore</strong> large
+        documents in a tree. So we built it.
+      </p>
 
-        <h2>Who Uses JSON Online Viewer</h2>
-        <p>
-          Tens of thousands of developers, QA engineers, API integrators, data analysts,
-          technical writers, and students use our tool every month. It is used to debug REST
-          and GraphQL responses, format config files, validate payloads before shipping,
-          teach JSON syntax in classrooms, and quickly inspect data exports from third-party
-          services.
-        </p>
+      <h2>Who it&apos;s for</h2>
+      <ul>
+        <li><strong>Backend developers</strong> formatting API responses</li>
+        <li><strong>Frontend engineers</strong> validating payloads from a backend</li>
+        <li><strong>QA testers</strong> exploring test fixtures</li>
+        <li><strong>Data analysts</strong> inspecting exports</li>
+        <li><strong>Technical writers</strong> preparing sample documentation</li>
+        <li><strong>Students</strong> learning JSON syntax</li>
+      </ul>
 
-        <h2>How It Is Built</h2>
-        <p>
-          The tool is built with React, Vite, and modern web standards. It is a fully client-side
-          progressive web app hosted on Cloudflare Pages, which lets us serve the static bundle
-          from a global edge network for near-instant loads anywhere in the world. There is no
-          backend that touches your data — the parser, the formatter, the tree view, and the
-          search engine all run in your browser tab.
-        </p>
-      </PageLayout>
-    </>
+      <h2>What it offers</h2>
+      <ul>
+        <li>Live validation with <strong>line and column</strong> error reporting</li>
+        <li>One-click <strong>format</strong> (pretty-print) and <strong>minify</strong></li>
+        <li>Two output modes: color-coded text and an expandable <strong>tree</strong></li>
+        <li><strong>Search</strong> across keys and values, with matches auto-expanded</li>
+        <li>Click any value to see its <strong>JSON path</strong>, type, and contents</li>
+        <li>Open <code>.json</code> files, or load from built-in samples</li>
+        <li>Light and dark friendly styling; input persisted to <code>localStorage</code></li>
+        <li><strong>100% client-side</strong> &mdash; nothing leaves your device</li>
+      </ul>
+
+      <h2>Our principles</h2>
+      <ul>
+        <li><strong>Privacy first.</strong> We don&apos;t upload, log, or analyze your JSON.</li>
+        <li><strong>No sign-up walls.</strong> The whole tool is on the home page.</li>
+        <li><strong>Open and honest.</strong> No dark patterns, no ad tricks.</li>
+        <li><strong>Fast and small.</strong> Loads in under a second on a slow connection.</li>
+      </ul>
+
+      <h2>Get in touch</h2>
+      <p>
+        Have a question, found a bug, or want to suggest a feature? Visit the{' '}
+        <a href="/contact">contact page</a> or check the <a href="/faq">FAQ</a>.
+      </p>
+    </PageLayout>
   )
 }

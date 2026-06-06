@@ -6,8 +6,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 import Terms from './pages/Terms.jsx'
 import Contact from './pages/Contact.jsx'
 import Faq from './pages/Faq.jsx'
-import Footer from './components/Footer.jsx'
-import Navbar from './components/Navbar.jsx'
+import SiteFooter from './components/SiteFooter.jsx'
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation()
@@ -28,7 +27,6 @@ export default function AppRoutes() {
   return (
     <>
       <ScrollToTop />
-      <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about-us" element={<AboutUs />} />
@@ -38,7 +36,7 @@ export default function AppRoutes() {
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<Home />} />
       </Routes>
-      <Footer />
+      <SiteFooter />
     </>
   )
 }
