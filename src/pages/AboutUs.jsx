@@ -77,14 +77,6 @@ export default function AboutUs() {
           backend that touches your data — the parser, the formatter, the tree view, and the
           search engine all run in your browser tab.
         </p>
-
-        <h2>Get in Touch</h2>
-        <p>
-          Have feedback, found a bug, or want to request a feature? We would love to hear from
-          you. Visit our <Link to="/contact">contact page</Link> to send us a message, or read
-          our <Link to="/privacy-policy">privacy policy</Link> to learn more about how we
-          handle (or rather, do not handle) your data.
-        </p>
       </PageLayout>
     </>
   )
