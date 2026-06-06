@@ -95,7 +95,7 @@ export default function ViewerTab() {
               className={'viewer-tab' + (view === 'text' ? ' active' : '')}
               onClick={() => setView('text')}
               aria-selected={view === 'text'}
-            >Formated</button>
+            >JSON Format</button>
             <button
               role="tab"
               className={'viewer-tab' + (view === 'tree' ? ' active' : '')}
