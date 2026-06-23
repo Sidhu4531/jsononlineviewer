@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import { parseJSON, formatJSON, minifyJSON, byteSize, formatBytes, pathToString, countNodes, depthOf, computeStats, searchInJSON } from '../lib/utils.js'
+import { parseJSON, formatJSON, minifyJSON, byteSize, formatBytes, pathToString, countNodes, depthOf, computeStats, searchInJSON, generateArrayChunked } from '../lib/utils.js'
 import { SAMPLE_JSON, SAMPLE_LIST } from '../lib/samples.js'
 import Editor from './Editor.jsx'
 import JsonText from './JsonText.jsx'
@@ -34,6 +34,8 @@ export default function ViewerTab() {
   const [parsed, setParsed] = useState(() => parseJSON(loadSavedInput()))
   const [workerStats, setWorkerStats] = useState(null)
   const [wasLarge, setWasLarge] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [generatingProgress, setGeneratingProgress] = useState(0)
   const fileTextRef = useRef('')
 
   useEffect(() => {
@@ -134,6 +136,40 @@ export default function ViewerTab() {
     }
   }, [])
 
+  const onGenerateArray = useCallback(() => {
+    if (!parsed.ok || wasLarge || generating) return
+    const inputCount = window.prompt('How many items to generate?', '10')
+    if (inputCount === null) return
+    const count = parseInt(inputCount, 10)
+    if (!Number.isFinite(count) || count < 1) return
+
+    setGenerating(true)
+    setGeneratingProgress(0)
+
+    const CHUNK_SIZE = count > 10000 ? 2000 : 500
+
+    generateArrayChunked(parsed.data, count, CHUNK_SIZE, (done, total) => {
+      setGeneratingProgress(Math.round((done / total) * 100))
+    }).then((arr) => {
+      setTimeout(() => {
+        const text = JSON.stringify(arr, null, indent)
+        if (text.length > LARGE_BYTES) {
+          fileTextRef.current = text
+          setInput(`// Generated ${count} items (${formatBytes(text.length)})\n// Warning: Data too large to display in editor. Showing tree view.\n`)
+          setParsed({ ok: true, data: arr, error: null, empty: false })
+          setWasLarge(true)
+          setView('tree')
+          requestAnimationFrame(() => {
+            setWorkerStats(computeStats(arr))
+          })
+        } else {
+          setInput(text)
+        }
+        setGenerating(false)
+      }, 0)
+    })
+  }, [parsed, indent, wasLarge, generating])
+
   const onSample = useCallback((key) => {
     const s = SAMPLE_JSON[key]
     if (s) {
@@ -161,11 +197,11 @@ export default function ViewerTab() {
         return
       }
       fileTextRef.current = text
-      setInput(`// Loaded: ${file.name} (${formatBytes(text.length)})\n`)
+      setInput(`// Loaded: ${file.name} (${formatBytes(text.length)})\n// Warning: Large file — showing tree view only.\n`)
       setTimeout(() => {
         const result = parseJSON(text)
         if (result.ok) {
-          setInput(`// ${file.name} (${formatBytes(text.length)})\n`)
+          setInput(`// ${file.name} (${formatBytes(text.length)})\n// Warning: Large file — showing tree view only.\n`)
           setParsed(result)
           setWasLarge(true)
           setView('tree')
@@ -199,6 +235,7 @@ export default function ViewerTab() {
 
   const isLarge = wasLarge
   const isParsing = parsing
+  const isGenerating = generating
 
   return (
     <div className="viewer">
@@ -249,6 +286,7 @@ export default function ViewerTab() {
                 <option value="tab">Tab</option>
               </select>
             </label>
+            <button className="btn" onClick={onGenerateArray} disabled={!parsed.ok || isParsing || isLarge || isGenerating} title={isGenerating ? `Generating ${generatingProgress}%…` : 'Generate array from template'}>{isGenerating ? `${generatingProgress}%` : 'Generate'}</button>
             <button className="btn danger" onClick={onClear} title="Clear input">Clear</button>
           </div>
         </div>
@@ -288,7 +326,7 @@ export default function ViewerTab() {
           <div className="section-head">
             <h2 className="section-title">Input</h2>
             <div className="section-meta">
-              {inputLineCount} lines
+              {isGenerating ? `${generatingProgress}%` : `${inputLineCount} lines`}
               {isParsing && ' · parsing…'}
             </div>
           </div>
@@ -301,6 +339,8 @@ export default function ViewerTab() {
             <div className="section-meta">
               {isParsing ? (
                 <span className="parsing-indicator">Parsing large file…</span>
+              ) : isGenerating ? (
+                <span className="parsing-indicator">Generating {generatingProgress}%…</span>
               ) : parsed.ok ? (
                 `${nodeCount} node${nodeCount === 1 ? '' : 's'} · depth ${depth}`
               ) : '—'}
@@ -314,6 +354,14 @@ export default function ViewerTab() {
                 Parsing {formatBytes(size)} JSON…
               </div>
               <div className="parsing-sub">The editor is ready. View will appear here once parsed.</div>
+            </div>
+          ) : isGenerating ? (
+            <div className="parsing-overlay">
+              <div className="spinner" />
+              <div className="parsing-text">
+                Generating {generatingProgress}%…
+              </div>
+              <div className="parsing-sub">Building array from template. Please wait…</div>
             </div>
           ) : parsed.empty ? (
             <div className="empty-state">
@@ -362,19 +410,20 @@ export default function ViewerTab() {
       )}
 
       <footer className="statusbar">
-        <div className={'status-validity ' + (isParsing ? 'muted' : parsed.empty ? 'muted' : parsed.ok ? 'ok' : 'err')}>
-          {isParsing ? '○ Parsing…' : parsed.empty ? '○ Empty' : parsed.ok ? '● Valid JSON' : '✕ Invalid JSON'}
+        <div className={'status-validity ' + (isParsing ? 'muted' : isGenerating ? 'muted' : parsed.empty ? 'muted' : parsed.ok ? 'ok' : 'err')}>
+          {isParsing ? '○ Parsing…' : isGenerating ? '○ Generating…' : parsed.empty ? '○ Empty' : parsed.ok ? '● Valid JSON' : '✕ Invalid JSON'}
         </div>
-        {!isParsing && parsed.error && !parsed.empty && (
+        {!isParsing && !isGenerating && parsed.error && !parsed.empty && (
           <div className="status-error" title={parsed.error.message}>
             Line {parsed.error.line}, col {parsed.error.col}
           </div>
         )}
         <div className="status-spacer" />
         {isParsing && <div className="status-stat">parsing {formatBytes(size)}…</div>}
-        {!isParsing && <div className="status-stat">{formatBytes(size)}</div>}
-        {!isParsing && <div className="status-stat">{nodeCount} {nodeCount === 1 ? 'node' : 'nodes'}</div>}
-        {!isParsing && <div className="status-stat">depth {depth}</div>}
+        {isGenerating && <div className="status-stat">generating {generatingProgress}%…</div>}
+        {!isParsing && !isGenerating && <div className="status-stat">{formatBytes(size)}</div>}
+        {!isParsing && !isGenerating && <div className="status-stat">{nodeCount} {nodeCount === 1 ? 'node' : 'nodes'}</div>}
+        {!isParsing && !isGenerating && <div className="status-stat">depth {depth}</div>}
         {selectedPath.length > 0 && (
           <div className="status-path" title={pathToString(selectedPath)}>
             {pathToString(selectedPath)}

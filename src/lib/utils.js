@@ -147,6 +147,114 @@ export function computeStats(data) {
   return { nodeCount, depth: maxDepth }
 }
 
+export function generateArrayFromTemplate(template, count) {
+  if (count < 1) return []
+  let tpl = template
+  if (Array.isArray(template)) {
+    tpl = template.length > 0 ? template[0] : null
+  }
+  if (tpl === null || typeof tpl !== 'object' || Array.isArray(tpl)) {
+    return Array.from({ length: count }, () => deepGenerate(tpl, 0, count))
+  }
+  return Array.from({ length: count }, (_, i) => deepGenerate(tpl, i, count))
+}
+
+export function generateArrayChunked(template, count, chunkSize, onProgress) {
+  return new Promise((resolve) => {
+    let tpl = template
+    if (Array.isArray(template)) {
+      tpl = template.length > 0 ? template[0] : null
+    }
+    const result = []
+    let generated = 0
+    let lastUpdate = 0
+    const useIndex = tpl !== null && typeof tpl === 'object' && !Array.isArray(tpl)
+
+    function processChunk() {
+      const end = Math.min(generated + chunkSize, count)
+      for (let i = generated; i < end; i++) {
+        result.push(useIndex ? deepGenerate(tpl, i, count) : deepGenerate(tpl, 0, count))
+      }
+      generated = end
+
+      const now = Date.now()
+      if (onProgress && now - lastUpdate > 100) {
+        onProgress(generated, count)
+        lastUpdate = now
+      }
+
+      if (generated < count) {
+        setTimeout(processChunk, 0)
+      } else {
+        if (onProgress) onProgress(count, count)
+        resolve(result)
+      }
+    }
+
+    setTimeout(processChunk, 0)
+  })
+}
+
+function deepGenerate(template, index, total) {
+  if (template === null || template === undefined) return null
+
+  if (typeof template === 'string') {
+    return generateString(template, index)
+  }
+
+  if (typeof template === 'number') {
+    const range = Math.max(Math.abs(template) * 0.3, 1)
+    return Math.round((template + (Math.random() - 0.5) * range) * 100) / 100
+  }
+
+  if (typeof template === 'boolean') {
+    return Math.random() > 0.5
+  }
+
+  if (Array.isArray(template)) {
+    return template.map((item) => deepGenerate(item, index, total))
+  }
+
+  if (typeof template === 'object') {
+    const result = {}
+    for (const key of Object.keys(template)) {
+      result[key] = deepGenerate(template[key], index, total)
+    }
+    return result
+  }
+
+  return template
+}
+
+function generateString(template, index) {
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(template)) {
+    return cryptoRandom()
+  }
+  const emailMatch = template.match(/^(.+)@(.+)$/)
+  if (emailMatch) {
+    return `${emailMatch[1]}${index + 1}@${emailMatch[2]}`
+  }
+  if (/\d+/.test(template)) {
+    return template.replace(/(\d+)/, (m) => String(Number(m) + index))
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(template)) {
+    const d = new Date(template)
+    if (!isNaN(d.getTime())) {
+      const nd = new Date(d)
+      nd.setDate(d.getDate() + index)
+      return nd.toISOString().replace('Z', '')
+    }
+  }
+  return `${template} ${index + 1}`
+}
+
+function cryptoRandom() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+  })
+}
+
 export function searchInJSON(data, query) {
   if (!query) return new Set()
   const q = query.toLowerCase()

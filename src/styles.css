@@ -266,6 +266,18 @@ a:hover { color: var(--accent-dark); }
   border-color: var(--error);
 }
 .btn.small { padding: 4px 10px; font-size: 12px; }
+select.btn {
+  height: 33px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
 .btn-label {
   display: inline-flex;
   align-items: center;
@@ -278,9 +290,10 @@ a:hover { color: var(--accent-dark); }
   border: 1px solid var(--border);
   border-radius: 3px;
   font-size: 12px;
-  padding: 1px 4px;
+  padding: 2px 6px;
   color: var(--text);
   cursor: pointer;
+  font-family: var(--font-mono);
 }
 
 /* search */
@@ -451,15 +464,17 @@ a:hover { color: var(--accent-dark); }
   font-size: 12px;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  flex-wrap: wrap;
+  flex-shrink: 0;
 }
-.status-validity { font-weight: 600; }
+.status-validity { font-weight: 600; padding: 2px 0; }
 .status-validity.ok { color: var(--success); }
 .status-validity.err { color: var(--error); }
 .status-validity.muted { color: var(--text-faint); }
 .status-error { color: var(--error); }
-.status-spacer { flex: 1; }
-.status-stat { white-space: nowrap; }
+.status-spacer { flex: 1; min-width: 8px; }
+.status-stat {
+  white-space: nowrap;
+}
 .status-path {
   color: var(--syn-key);
   background: var(--surface);
@@ -973,8 +988,8 @@ a:hover { color: var(--accent-dark); }
   .app-main { padding: 12px 10px 30px; }
   .app-main-inner { min-height: 70vh; }
 
-  .statusbar { padding: 5px 10px; gap: 10px; font-size: 11px; }
-  .status-path { max-width: 180px; }
+  .statusbar { padding: 4px 10px; gap: 10px; font-size: 11px; flex-wrap: wrap; }
+  .status-path { max-width: 120px; }
 
   .editor-gutter { min-width: 36px; padding: 8px 5px; }
   .editor-area { padding: 8px 10px; font-size: 12px; }
