@@ -1,31 +1,96 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import { parseJSON, formatJSON, minifyJSON, byteSize, formatBytes, pathToString, countNodes, depthOf, searchInJSON } from '../lib/utils.js'
+import { parseJSON, formatJSON, minifyJSON, byteSize, formatBytes, pathToString, countNodes, depthOf, computeStats, searchInJSON } from '../lib/utils.js'
 import { SAMPLE_JSON, SAMPLE_LIST } from '../lib/samples.js'
 import Editor from './Editor.jsx'
 import JsonText from './JsonText.jsx'
 import JsonTree from './JsonTree.jsx'
 
 const STORAGE_KEY = 'json-viewer:input'
+const LARGE_BYTES = 100 * 1024
+
+try {
+  const saved = localStorage.getItem(STORAGE_KEY)
+  if (saved && saved.length > LARGE_BYTES) localStorage.removeItem(STORAGE_KEY)
+} catch (_) {}
+
+function loadSavedInput() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved && saved.length <= LARGE_BYTES) return saved
+  } catch (_) {}
+  return JSON.stringify(SAMPLE_JSON.basic.data, null, 4)
+}
 
 export default function ViewerTab() {
-  const [input, setInput] = useState(() => {
-    return localStorage.getItem(STORAGE_KEY) || JSON.stringify(SAMPLE_JSON.basic.data, null, 4)
-  })
+  const [input, setInput] = useState(loadSavedInput)
   const [indent, setIndent] = useState(4)
-  const [view, setView] = useState('text') // 'text' | 'tree'
+  const [view, setView] = useState('text')
   const [selectedPath, setSelectedPath] = useState([])
   const [search, setSearch] = useState('')
   const [copied, setCopied] = useState(false)
   const fileInputRef = useRef(null)
+  const workerRef = useRef(null)
+  const [parsing, setParsing] = useState(false)
+  const [parsed, setParsed] = useState(() => parseJSON(loadSavedInput()))
+  const [workerStats, setWorkerStats] = useState(null)
+  const [wasLarge, setWasLarge] = useState(false)
+  const fileTextRef = useRef('')
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, input)
+    workerRef.current = new Worker(new URL('../workers/parseWorker.js', import.meta.url))
+    workerRef.current.onmessage = (e) => {
+      const { success, data, error, stats } = e.data
+      if (success) {
+        setParsed({ ok: true, data, error: null, empty: false })
+        setWorkerStats(stats)
+        setWasLarge(true)
+        setView('tree')
+      } else {
+        setParsed({ ok: false, data: null, error, empty: false })
+        setWorkerStats(null)
+      }
+      setParsing(false)
+    }
+    return () => workerRef.current?.terminate()
+  }, [])
+
+  const lastInputRef = useRef(input)
+  useEffect(() => {
+    if (input !== lastInputRef.current) {
+      lastInputRef.current = input
+      if (!input || input.length <= LARGE_BYTES) {
+        if (typeof input === 'string' && input.startsWith('//')) return
+        setParsed(parseJSON(input))
+        setWorkerStats(null)
+        setWasLarge(false)
+      }
+    }
   }, [input])
 
-  const parsed = useMemo(() => parseJSON(input), [input])
-  const size = byteSize(input)
-  const nodeCount = parsed.ok ? countNodes(parsed.data) : 0
-  const depth = parsed.ok ? depthOf(parsed.data) : 0
+  useEffect(() => {
+    if (input && input.length > LARGE_BYTES) return
+    try { localStorage.setItem(STORAGE_KEY, input) } catch (_) {}
+  }, [input])
+
+  const size = useMemo(() => {
+    if (wasLarge && fileTextRef.current) return fileTextRef.current.length
+    return byteSize(input)
+  }, [input, wasLarge])
+
+  const inputLineCount = useMemo(() => {
+    if (!input) return 0
+    if (input.length > LARGE_BYTES) {
+      let n = 1
+      for (let i = 0; i < input.length; i++) { if (input[i] === '\n') n++ }
+      return n
+    }
+    let n = 1
+    for (let i = 0; i < input.length; i++) { if (input[i] === '\n') n++ }
+    return n
+  }, [input])
+
+  const nodeCount = parsed.ok ? (workerStats?.nodeCount ?? countNodes(parsed.data)) : 0
+  const depth = parsed.ok ? (workerStats?.depth ?? depthOf(parsed.data)) : 0
   const matches = useMemo(() => (parsed.ok ? searchInJSON(parsed.data, search) : new Set()), [parsed, search])
 
   const selectedValue = useMemo(() => {
@@ -40,7 +105,9 @@ export default function ViewerTab() {
 
   const onFormat = useCallback(() => {
     if (!parsed.ok) return
-    setInput(formatJSON(parsed.data, indent))
+    const formatted = formatJSON(parsed.data, indent)
+    setInput(formatted)
+    setParsed({ ok: true, data: parsed.data, error: null, empty: false })
   }, [parsed, indent])
 
   const onMinify = useCallback(() => {
@@ -50,33 +117,78 @@ export default function ViewerTab() {
 
   const onCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(input)
+      const text = wasLarge && fileTextRef.current ? fileTextRef.current : input
+      await navigator.clipboard.writeText(text)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     } catch (e) {
       console.error('Copy failed', e)
     }
-  }, [input])
+  }, [input, wasLarge])
 
   const onClear = useCallback(() => {
-    if (window.confirm('Clear all input?')) setInput('')
+    if (window.confirm('Clear all input?')) {
+      setInput('')
+      fileTextRef.current = ''
+      setWasLarge(false)
+    }
   }, [])
 
   const onSample = useCallback((key) => {
     const s = SAMPLE_JSON[key]
-    if (s) setInput(JSON.stringify(s.data, null, indent))
+    if (s) {
+      const text = JSON.stringify(s.data, null, indent)
+      fileTextRef.current = ''
+      setInput(text)
+      setParsed(parseJSON(text))
+      setWasLarge(false)
+    }
   }, [indent])
 
   const onFile = useCallback((e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setInput(`// Loading: ${file.name} (${formatBytes(file.size)})\n`)
+    setParsing(true)
+    setWorkerStats(null)
+    setWasLarge(false)
     const reader = new FileReader()
-    reader.onload = () => setInput(String(reader.result || ''))
+    reader.onload = () => {
+      const text = String(reader.result || '')
+      if (!text || text.length <= LARGE_BYTES) {
+        setInput(text)
+        setParsing(false)
+        return
+      }
+      fileTextRef.current = text
+      setInput(`// Loaded: ${file.name} (${formatBytes(text.length)})\n`)
+      setTimeout(() => {
+        const result = parseJSON(text)
+        if (result.ok) {
+          setInput(`// ${file.name} (${formatBytes(text.length)})\n`)
+          setParsed(result)
+          setWasLarge(true)
+          setView('tree')
+          setParsing(false)
+          requestAnimationFrame(() => {
+            const stats = computeStats(result.data)
+            setWorkerStats(stats)
+          })
+        } else {
+          setParsed(result)
+          setParsing(false)
+        }
+      }, 100)
+    }
     reader.readAsText(file)
     e.target.value = ''
   }, [])
 
-  const onEditorChange = useCallback((next) => setInput(next), [])
+  const onEditorChange = useCallback((next) => {
+    fileTextRef.current = ''
+    setWasLarge(false)
+    setInput(next)
+  }, [])
 
   const onExpandAll = useCallback(() => {
     window.dispatchEvent(new CustomEvent('json-viewer:expand-all'))
@@ -85,6 +197,9 @@ export default function ViewerTab() {
     window.dispatchEvent(new CustomEvent('json-viewer:collapse-all'))
   }, [])
 
+  const isLarge = wasLarge
+  const isParsing = parsing
+
   return (
     <div className="viewer">
       <div className="viewer-toolbar">
@@ -92,9 +207,10 @@ export default function ViewerTab() {
           <div className="viewer-tabs" role="tablist" aria-label="Output mode">
             <button
               role="tab"
-              className={'viewer-tab' + (view === 'text' ? ' active' : '')}
+              className={'viewer-tab' + (view === 'text' ? ' active' : '') + (isLarge && view === 'text' ? ' warn' : '')}
               onClick={() => setView('text')}
               aria-selected={view === 'text'}
+              title={isLarge ? 'Large file — showing first 2000 lines only' : ''}
             >JSON Format</button>
             <button
               role="tab"
@@ -105,8 +221,8 @@ export default function ViewerTab() {
           </div>
 
           <div className="viewer-actions">
-            <button className="btn primary" onClick={onFormat} disabled={!parsed.ok} title="Format / pretty-print">Format</button>
-            <button className="btn" onClick={onMinify} disabled={!parsed.ok} title="Minify / compress">Minify</button>
+            <button className="btn primary" onClick={onFormat} disabled={!parsed.ok || isParsing || isLarge} title="Format / pretty-print">Format</button>
+            <button className="btn" onClick={onMinify} disabled={!parsed.ok || isParsing || isLarge} title="Minify / compress">Minify</button>
             <button className="btn" onClick={onCopy} title="Copy input">{copied ? 'Copied!' : 'Copy'}</button>
             <button className="btn" onClick={() => fileInputRef.current?.click()} title="Open .json file">Open file</button>
             <select
@@ -150,7 +266,7 @@ export default function ViewerTab() {
               <button className="search-clear" onClick={() => setSearch('')} aria-label="Clear search">×</button>
             )}
           </div>
-          {view === 'tree' && (
+          {view === 'tree' && parsed.ok && (
             <div className="viewer-tree-actions">
               <button className="btn small" onClick={onExpandAll}>Expand all</button>
               <button className="btn small" onClick={onCollapseAll}>Collapse all</button>
@@ -172,7 +288,8 @@ export default function ViewerTab() {
           <div className="section-head">
             <h2 className="section-title">Input</h2>
             <div className="section-meta">
-              {input ? `${input.split('\n').length} lines` : 'Empty'}
+              {inputLineCount} lines
+              {isParsing && ' · parsing…'}
             </div>
           </div>
           <Editor value={input} onChange={onEditorChange} error={parsed.ok ? null : parsed.error} />
@@ -182,11 +299,23 @@ export default function ViewerTab() {
           <div className="section-head">
             <h2 className="section-title">Output</h2>
             <div className="section-meta">
-              {parsed.ok ? `${nodeCount} node${nodeCount === 1 ? '' : 's'} · depth ${depth}` : '—'}
+              {isParsing ? (
+                <span className="parsing-indicator">Parsing large file…</span>
+              ) : parsed.ok ? (
+                `${nodeCount} node${nodeCount === 1 ? '' : 's'} · depth ${depth}`
+              ) : '—'}
             </div>
           </div>
 
-          {parsed.empty ? (
+          {isParsing ? (
+            <div className="parsing-overlay">
+              <div className="spinner" />
+              <div className="parsing-text">
+                Parsing {formatBytes(size)} JSON…
+              </div>
+              <div className="parsing-sub">The editor is ready. View will appear here once parsed.</div>
+            </div>
+          ) : parsed.empty ? (
             <div className="empty-state">
               <div className="empty-icon">{'{ }'}</div>
               <p>Paste JSON in the input on the left, or load a sample to get started.</p>
@@ -233,18 +362,19 @@ export default function ViewerTab() {
       )}
 
       <footer className="statusbar">
-        <div className={'status-validity ' + (parsed.empty ? 'muted' : parsed.ok ? 'ok' : 'err')}>
-          {parsed.empty ? '○ Empty' : parsed.ok ? '● Valid JSON' : '✕ Invalid JSON'}
+        <div className={'status-validity ' + (isParsing ? 'muted' : parsed.empty ? 'muted' : parsed.ok ? 'ok' : 'err')}>
+          {isParsing ? '○ Parsing…' : parsed.empty ? '○ Empty' : parsed.ok ? '● Valid JSON' : '✕ Invalid JSON'}
         </div>
-        {parsed.error && !parsed.empty && (
+        {!isParsing && parsed.error && !parsed.empty && (
           <div className="status-error" title={parsed.error.message}>
             Line {parsed.error.line}, col {parsed.error.col}
           </div>
         )}
         <div className="status-spacer" />
-        <div className="status-stat">{formatBytes(size)}</div>
-        <div className="status-stat">{nodeCount} {nodeCount === 1 ? 'node' : 'nodes'}</div>
-        <div className="status-stat">depth {depth}</div>
+        {isParsing && <div className="status-stat">parsing {formatBytes(size)}…</div>}
+        {!isParsing && <div className="status-stat">{formatBytes(size)}</div>}
+        {!isParsing && <div className="status-stat">{nodeCount} {nodeCount === 1 ? 'node' : 'nodes'}</div>}
+        {!isParsing && <div className="status-stat">depth {depth}</div>}
         {selectedPath.length > 0 && (
           <div className="status-path" title={pathToString(selectedPath)}>
             {pathToString(selectedPath)}

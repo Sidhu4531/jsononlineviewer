@@ -1,5 +1,8 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { pathToString } from '../lib/utils.js'
+
+const CHUNK_STEP = 50
+const SEARCH_CHUNK = 200
 
 export default function JsonTree({ data, selectedPath, onSelect, search, matches }) {
   const [expanded, setExpanded] = useState(() => new Set(['']))
@@ -26,8 +29,16 @@ export default function JsonTree({ data, selectedPath, onSelect, search, matches
           }
         }
         if (v && typeof v === 'object') {
-          for (const [k, child] of Object.entries(v)) {
-            visit(child, [...parts, Number.isNaN(Number(k)) ? k : Number(k)])
+          if (Array.isArray(v)) {
+            for (let i = 0; i < v.length; i++) {
+              visit(v[i], [...parts, i])
+            }
+          } else {
+            const keys = Object.keys(v)
+            for (let i = 0; i < keys.length; i++) {
+              const k = keys[i]
+              visit(v[k], [...parts, Number.isNaN(Number(k)) ? k : Number(k)])
+            }
           }
         }
       }
@@ -40,7 +51,6 @@ export default function JsonTree({ data, selectedPath, onSelect, search, matches
     setExpanded((prev) => {
       const next = new Set(prev)
       if (next.has('__all__')) {
-        // when fully expanded, toggling collapses only this path
         next.delete(path)
         next.delete('__all__')
         return next
@@ -56,6 +66,7 @@ export default function JsonTree({ data, selectedPath, onSelect, search, matches
   return (
     <div className="tree" role="tree">
       <Node
+        key={allExpanded ? 'all' : 'partial'}
         value={data}
         parts={[]}
         label="$"
@@ -80,12 +91,85 @@ function Node({ value, parts, label, isRoot, expanded, allExpanded, onToggle, on
   const isMatch = matches.has(path)
   const isSelected = selectedPath && path === pathToString(selectedPath)
 
+  const [visibleCount, setVisibleCount] = useState(CHUNK_STEP)
+
+  const isArray = Array.isArray(value)
+
+  const childCount = useMemo(() => {
+    if (!isContainer) return 0
+    if (isArray) return value.length
+    return Object.keys(value).length
+  }, [isContainer, isArray, value])
+
+  const objectKeys = useMemo(() => {
+    if (isArray || !isContainer) return null
+    return Object.keys(value)
+  }, [isContainer, isArray, value])
+
+  const hasSearch = search && matches.size > 0
+  const maxVisible = isOpen ? (
+    allExpanded ? childCount : Math.max(visibleCount, hasSearch ? SEARCH_CHUNK : 0)
+  ) : 0
+
+  const visibleEnd = Math.min(maxVisible, childCount)
+  const remaining = childCount - visibleEnd
+
   const onClick = () => {
-    if (isContainer) onSelect(parts, value)
-    else onSelect(parts, value)
+    onSelect(parts, value)
   }
 
-  const childEntries = isContainer ? Object.entries(value) : []
+  const children = useMemo(() => {
+    if (!isContainer || !isOpen || childCount === 0) return null
+    const elems = []
+    if (isArray) {
+      for (let i = 0; i < visibleEnd; i++) {
+        elems.push(
+          <Node
+            key={i}
+            value={value[i]}
+            parts={[...parts, i]}
+            label={String(i)}
+            expanded={expanded}
+            allExpanded={allExpanded}
+            onToggle={onToggle}
+            onSelect={onSelect}
+            selectedPath={selectedPath}
+            search={search}
+            matches={matches}
+          />
+        )
+      }
+    } else if (objectKeys) {
+      for (let i = 0; i < visibleEnd; i++) {
+        const k = objectKeys[i]
+        elems.push(
+          <Node
+            key={k}
+            value={value[k]}
+            parts={[...parts, Number.isNaN(Number(k)) ? k : Number(k)]}
+            label={k}
+            expanded={expanded}
+            allExpanded={allExpanded}
+            onToggle={onToggle}
+            onSelect={onSelect}
+            selectedPath={selectedPath}
+            search={search}
+            matches={matches}
+          />
+        )
+      }
+    }
+    if (remaining > 0) {
+      elems.push(
+        <SentinelTrigger
+          key="__sentinel__"
+          onShow={() => setVisibleCount((c) => c + CHUNK_STEP)}
+          remaining={remaining}
+        />
+      )
+    }
+    return elems
+  }, [isContainer, isOpen, childCount, isArray, objectKeys, value, visibleEnd, remaining, expanded, allExpanded, onToggle, onSelect, selectedPath, search, matches, parts])
 
   return (
     <div className={'kv-row' + (isSelected ? ' selected' : '') + (isMatch ? ' match' : '')}>
@@ -101,40 +185,22 @@ function Node({ value, parts, label, isRoot, expanded, allExpanded, onToggle, on
         )}
         {!isRoot && (
           <span className="kv-key">
-            {kind === 'array' && /^\d+$/.test(String(label)) ? `[${label}]` : `"${label}"`}
+            {isArray && /^\d+$/.test(String(label)) ? `[${label}]` : `"${label}"`}
             <span className="kv-colon">: </span>
           </span>
         )}
-        {renderValue(value, kind, isOpen)}
+        {renderValue(value, kind, isOpen, childCount)}
       </div>
-      {isContainer && isOpen && (
+      {children && (
         <div className="kv-children">
-          {childEntries.length === 0 ? (
-            <div className="kv-empty">{kind === 'array' ? '[]' : '{}'}</div>
-          ) : (
-            childEntries.map(([k, v]) => (
-              <Node
-                key={k}
-                value={v}
-                parts={[...parts, Number.isNaN(Number(k)) ? k : Number(k)]}
-                label={k}
-                expanded={expanded}
-                allExpanded={allExpanded}
-                onToggle={onToggle}
-                onSelect={onSelect}
-                selectedPath={selectedPath}
-                search={search}
-                matches={matches}
-              />
-            ))
-          )}
+          {children}
         </div>
       )}
     </div>
   )
 }
 
-function renderValue(value, kind, isOpen) {
+function renderValue(value, kind, isOpen, childCount) {
   if (kind === 'null') return <span className="kv-value type-null">null</span>
   if (kind === 'string') return <span className="kv-value type-string">"{value}"</span>
   if (kind === 'number') return <span className="kv-value type-number">{String(value)}</span>
@@ -150,12 +216,39 @@ function renderValue(value, kind, isOpen) {
   if (kind === 'object') {
     return (
       <span className="kv-meta-inline">
-        <span className="kv-meta">Object({Object.keys(value).length})</span>
+        <span className="kv-meta">Object({childCount})</span>
         {!isOpen && <span className="kv-brace">{'{…}'}</span>}
       </span>
     )
   }
   return null
+}
+
+function SentinelTrigger({ onShow, remaining }) {
+  const ref = useRef(null)
+  const pendingRef = useRef(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || remaining <= 0) return
+    pendingRef.current = false
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !pendingRef.current) {
+          pendingRef.current = true
+          onShow()
+        }
+      },
+      { rootMargin: '300px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [onShow, remaining])
+
+  if (remaining <= 0) return null
+
+  return <div ref={ref} className="tree-sentinel" />
 }
 
 function kindOf(v) {

@@ -1,8 +1,12 @@
 import { useEffect, useRef } from 'react'
 
+const MAX_LINE_GUTTER = 2000
+
 export default function Editor({ value, onChange, error }) {
   const taRef = useRef(null)
-  const lineCount = value ? value.split('\n').length : 1
+  const totalLines = value ? value.split('\n').length : 1
+  const showLines = Math.min(totalLines, MAX_LINE_GUTTER)
+  const overflow = totalLines > MAX_LINE_GUTTER
 
   useEffect(() => {
     if (!taRef.current || !error) return
@@ -17,9 +21,10 @@ export default function Editor({ value, onChange, error }) {
   return (
     <div className="editor">
       <div className="editor-gutter" aria-hidden="true">
-        {Array.from({ length: Math.max(lineCount, 1) }, (_, i) => (
+        {Array.from({ length: showLines }, (_, i) => (
           <div key={i} className="gutter-line">{i + 1}</div>
         ))}
+        {overflow && <div className="gutter-line gutter-overflow">&#8230;</div>}
       </div>
       <textarea
         ref={taRef}

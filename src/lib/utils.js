@@ -97,7 +97,12 @@ export function countNodes(data) {
   function walk(v) {
     count++
     if (v && typeof v === 'object') {
-      for (const key of Object.keys(v)) walk(v[key])
+      if (Array.isArray(v)) {
+        for (let i = 0; i < v.length; i++) walk(v[i])
+      } else {
+        const keys = Object.keys(v)
+        for (let i = 0; i < keys.length; i++) walk(v[keys[i]])
+      }
     }
   }
   walk(data)
@@ -111,11 +116,35 @@ export function depthOf(data) {
     if (v && typeof v === 'object') {
       const cur = d + 1
       if (cur > max) max = cur
-      for (const key of Object.keys(v)) walk(v[key], cur)
+      if (Array.isArray(v)) {
+        for (let i = 0; i < v.length; i++) walk(v[i], cur)
+      } else {
+        const keys = Object.keys(v)
+        for (let i = 0; i < keys.length; i++) walk(v[keys[i]], cur)
+      }
     }
   }
   walk(data, 0)
   return max
+}
+
+export function computeStats(data) {
+  let nodeCount = 0
+  let maxDepth = 0
+  function walk(v, depth) {
+    nodeCount++
+    if (depth > maxDepth) maxDepth = depth
+    if (v && typeof v === 'object') {
+      if (Array.isArray(v)) {
+        for (let i = 0; i < v.length; i++) walk(v[i], depth + 1)
+      } else {
+        const keys = Object.keys(v)
+        for (let i = 0; i < keys.length; i++) walk(v[keys[i]], depth + 1)
+      }
+    }
+  }
+  walk(data, 0)
+  return { nodeCount, depth: maxDepth }
 }
 
 export function searchInJSON(data, query) {
