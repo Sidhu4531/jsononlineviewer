@@ -128,6 +128,18 @@ export default function ViewerTab() {
     }
   }, [input, wasLarge])
 
+  const onDownload = useCallback(() => {
+    const text = wasLarge && fileTextRef.current ? fileTextRef.current : input
+    if (!text) return
+    const blob = new Blob([text], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'data.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [input, wasLarge])
+
   const onClear = useCallback(() => {
     if (window.confirm('Clear all input?')) {
       setInput('')
@@ -261,6 +273,7 @@ export default function ViewerTab() {
             <button className="btn primary" onClick={onFormat} disabled={!parsed.ok || isParsing || isLarge} title="Format / pretty-print">Format</button>
             <button className="btn" onClick={onMinify} disabled={!parsed.ok || isParsing || isLarge} title="Minify / compress">Minify</button>
             <button className="btn" onClick={onCopy} title="Copy input">{copied ? 'Copied!' : 'Copy'}</button>
+            <button className="btn" onClick={onDownload} disabled={!input} title="Download as .json file">Download</button>
             <button className="btn" onClick={() => fileInputRef.current?.click()} title="Open .json file">Open file</button>
             <select
               className="btn"

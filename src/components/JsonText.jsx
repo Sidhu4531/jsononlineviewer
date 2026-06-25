@@ -83,7 +83,7 @@ export default function JsonText({ data, indent = 4, search = '', onSelect, sele
           {isTooLarge ? `${isTooLarge.toLocaleString()}+ items` : `${countAll(data)} value${countAll(data) === 1 ? '' : 's'}`}
         </span>
         <div className="json-text-actions">
-          {isTooLarge && <span className="json-text-warn" title="File too large for all actions">&#9888; large file</span>}
+          {isTooLarge > 0 && <span className="json-text-warn" title="File too large for all actions">&#9888; large file</span>}
           <button className="btn small" onClick={onExpandAll}>Expand all</button>
           <button className="btn small" onClick={onCollapseAll}>Collapse all</button>
           <button className="btn small" onClick={onCopy} disabled={isTooLarge}>{copied ? 'Copied!' : 'Copy'}</button>
