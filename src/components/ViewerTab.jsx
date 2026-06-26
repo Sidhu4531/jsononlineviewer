@@ -36,6 +36,7 @@ export default function ViewerTab() {
   const [wasLarge, setWasLarge] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [generatingProgress, setGeneratingProgress] = useState(0)
+  const [loadingUrl, setLoadingUrl] = useState(false)
   const fileTextRef = useRef('')
 
   useEffect(() => {
@@ -232,6 +233,26 @@ export default function ViewerTab() {
     e.target.value = ''
   }, [])
 
+  const onLoadUrl = useCallback(async () => {
+    const url = window.prompt('Enter a URL to load JSON from:')
+    if (!url || !url.trim()) return
+    setLoadingUrl(true)
+    try {
+      const res = await fetch(url.trim())
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)
+      const text = await res.text()
+      if (!text || !text.trim()) throw new Error('Empty response')
+      try { JSON.parse(text) } catch (_) { throw new Error('Response is not valid JSON') }
+      fileTextRef.current = ''
+      setWasLarge(false)
+      setInput(text)
+    } catch (e) {
+      window.alert(`Failed to load JSON from URL:\n${e.message}`)
+    } finally {
+      setLoadingUrl(false)
+    }
+  }, [])
+
   const onEditorChange = useCallback((next) => {
     fileTextRef.current = ''
     setWasLarge(false)
@@ -275,6 +296,7 @@ export default function ViewerTab() {
             <button className="btn" onClick={onCopy} title="Copy input">{copied ? 'Copied!' : 'Copy'}</button>
             <button className="btn" onClick={onDownload} disabled={!input} title="Download as .json file">Download</button>
             <button className="btn" onClick={() => fileInputRef.current?.click()} title="Open .json file">Open file</button>
+            <button className="btn" onClick={onLoadUrl} disabled={loadingUrl} title={loadingUrl ? 'Loading…' : 'Load JSON from a URL'}>{loadingUrl ? 'Loading…' : 'From URL'}</button>
             <select
               className="btn"
               onChange={(e) => { if (e.target.value) onSample(e.target.value) }}

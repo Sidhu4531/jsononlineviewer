@@ -1476,4 +1476,112 @@ select.btn {
   color: var(--warning);
   font-weight: 600;
 }
+
+/* ============ C# Class Generator ============ */
+.csharp-gen-root-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--text);
+  width: 150px;
+  transition: border-color 0.12s;
+}
+.csharp-gen-root-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(241, 100, 30, 0.12);
+}
+.csharp-gen-code {
+  margin: 0;
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text);
+  white-space: pre;
+  user-select: all;
+}
+
+/* ============ JSON Diff ============ */
+.diff-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.diff-stat {
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.diff-stat.added { background: #e6f7e6; color: #1a7d1a; }
+.diff-stat.removed { background: #fde8e8; color: #c41e1e; }
+.diff-stat.changed { background: #fff3e0; color: #b45309; }
+.diff-stat.total { background: var(--surface-alt); color: var(--text-muted); font-weight: 500; }
+.diff-stat.error { background: #fde8e8; color: #c41e1e; }
+
+.diff-list {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  padding: 6px 0;
+}
+.diff-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 14px;
+  transition: background 0.1s;
+}
+.diff-line:hover { background: var(--surface-hover); }
+.diff-line.added {
+  background: rgba(26, 125, 26, 0.06);
+  border-top: 1px solid rgba(26, 125, 26, 0.08);
+  border-bottom: 1px solid rgba(26, 125, 26, 0.08);
+}
+.diff-line.removed {
+  background: rgba(196, 30, 30, 0.06);
+  border-top: 1px solid rgba(196, 30, 30, 0.08);
+  border-bottom: 1px solid rgba(196, 30, 30, 0.08);
+}
+.diff-line.removed + .diff-line.added {
+  border-top: none;
+}
+.diff-prefix {
+  font-weight: 700;
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.diff-line.added .diff-prefix { color: var(--success); }
+.diff-line.removed .diff-prefix { color: var(--error); }
+.diff-path {
+  color: var(--syn-key);
+  font-weight: 500;
+  word-break: break-all;
+  flex-shrink: 0;
+  min-width: 60px;
+}
+.diff-eq {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+.diff-val {
+  color: var(--success);
+  font-weight: 500;
+  word-break: break-all;
+}
+.diff-old {
+  color: var(--error);
+  text-decoration: line-through;
+  word-break: break-all;
+}
+@media (max-width: 700px) {
+  .diff-line { flex-wrap: wrap; gap: 4px; padding: 4px 10px; }
+}
 }
