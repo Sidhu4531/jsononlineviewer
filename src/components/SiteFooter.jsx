@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTheme } from "../lib/ThemeContext.jsx";
 
 const LINKS = [
   { to: "/faq", label: "FAQ" },
@@ -10,6 +11,7 @@ const LINKS = [
 
 export default function SiteFooter() {
   const year = new Date().getFullYear();
+  const { theme, toggle } = useTheme();
   return (
     <footer className="site-footer site-footer-simple">
       <div className="site-footer-simple-inner">
@@ -20,7 +22,12 @@ export default function SiteFooter() {
             </Link>
           ))}
         </nav>
-        <span>© {year} JSON Viewer. Free, in-browser JSON tools.</span>
+        <div className="theme-toggle-wrap">
+          <span>© {year} JSON Viewer. Free, in-browser JSON tools.</span>
+          <button className="theme-toggle" onClick={toggle} aria-label="Toggle dark mode" title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+            {theme === 'dark' ? '\u2600' : '\u263E'}
+          </button>
+        </div>
       </div>
     </footer>
   );

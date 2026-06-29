@@ -1,19 +1,21 @@
-import { useState } from "react";
-import ViewerTab from "../components/ViewerTab.jsx";
-import AboutJsonTab from "../components/AboutJsonTab.jsx";
-import CSharpGenTab from "../components/CSharpGenTab.jsx";
-import JsonDiffTab from "../components/JsonDiffTab.jsx";
-import Seo from "../components/Seo.jsx";
+import { useState } from 'react'
+import ViewerTab from '../components/ViewerTab.jsx'
+import AboutJsonTab from '../components/AboutJsonTab.jsx'
+import CSharpGenTab from '../components/CSharpGenTab.jsx'
+import JsonDiffTab from '../components/JsonDiffTab.jsx'
+import Seo from '../components/Seo.jsx'
+import { useTheme } from '../lib/ThemeContext.jsx'
 
 const TABS = [
-  { id: "viewer", label: "JSON Viewer" },
-  { id: "about-json", label: "About JSON" },
-  { id: "csharp-gen", label: "C# Class Generator" },
-  { id: "json-diff", label: "JSON Difference" },
-];
+  { id: 'viewer', label: 'JSON Viewer' },
+  { id: 'about-json', label: 'About JSON' },
+  { id: 'csharp-gen', label: 'C# Class Generator' },
+  { id: 'json-diff', label: 'JSON Diff' },
+]
 
 export default function Home() {
-  const [active, setActive] = useState("viewer");
+  const [active, setActive] = useState('viewer')
+  const { theme, toggle } = useTheme()
 
   return (
     <div className="app">
@@ -28,8 +30,7 @@ export default function Home() {
         <div className="app-header-inner">
           <h1 className="app-title">Online JSON Viewer</h1>
           <p className="app-subtitle">
-            Format, validate and explore JSON data in your browser. Nothing is
-            sent to a server.
+            Format, validate and explore JSON data in your browser. Nothing is sent to a server.
           </p>
         </div>
       </header>
@@ -41,23 +42,26 @@ export default function Home() {
               key={t.id}
               role="tab"
               aria-selected={active === t.id}
-              className={"app-tab" + (active === t.id ? " active" : "")}
+              className={'app-tab' + (active === t.id ? ' active' : '')}
               onClick={() => setActive(t.id)}
             >
               {t.label}
             </button>
           ))}
+          <button className="theme-toggle" onClick={toggle} aria-label="Toggle dark mode" title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} style={{ marginLeft: 'auto', alignSelf: 'center' }}>
+            {theme === 'dark' ? '\u2600' : '\u263E'}
+          </button>
         </div>
       </nav>
 
       <main className="app-main">
         <div className="app-main-inner">
-          {active === "viewer" && <ViewerTab />}
-          {active === "about-json" && <AboutJsonTab />}
-          {active === "csharp-gen" && <CSharpGenTab />}
-          {active === "json-diff" && <JsonDiffTab />}
+          {active === 'viewer' && <ViewerTab />}
+          {active === 'about-json' && <AboutJsonTab />}
+          {active === 'csharp-gen' && <CSharpGenTab />}
+          {active === 'json-diff' && <JsonDiffTab />}
         </div>
       </main>
     </div>
-  );
+  )
 }
