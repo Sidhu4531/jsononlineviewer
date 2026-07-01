@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from 'react'
 import { diffJSON, DIFF_SAMPLES } from '../lib/json-diff.js'
 import { pathToString } from '../lib/utils.js'
 import Editor from './Editor.jsx'
-import { useTheme } from '../lib/ThemeContext.jsx'
 
 const FIRST = DIFF_SAMPLES[0]
 
@@ -34,7 +33,6 @@ function applyPatch(obj, changes) {
 }
 
 export default function JsonDiffTab() {
-  const { theme, toggle } = useTheme()
   const [inputA, setInputA] = useState(JSON.stringify(FIRST.a, null, 4))
   const [inputB, setInputB] = useState(JSON.stringify(FIRST.b, null, 4))
   const [errorA, setErrorA] = useState(null)
@@ -131,9 +129,6 @@ export default function JsonDiffTab() {
             {!parsedA && <span className="diff-stat error">JSON A invalid</span>}
             {!parsedB && <span className="diff-stat error">JSON B invalid</span>}
           </div>
-          <button className="theme-toggle" onClick={toggle} aria-label="Toggle dark mode" title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} style={{ marginLeft: 'auto' }}>
-            {theme === 'dark' ? '\u2600' : '\u263E'}
-          </button>
         </div>
       </div>
 

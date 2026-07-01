@@ -471,7 +471,6 @@ select.btn {
   min-height: 0;
   font-family: var(--font-mono);
   font-size: 13px;
-  line-height: 1.5;
   background: var(--surface);
   overflow: hidden;
 }
@@ -486,19 +485,25 @@ select.btn {
   overflow: hidden;
   flex-shrink: 0;
 }
-.gutter-line { font-size: 12px; line-height: 1.5; }
+.gutter-line { font-size: 13px; line-height: 20px; }
 .editor-area {
   flex: 1;
   background: var(--surface);
   color: var(--text);
+  caret-color: var(--text);
   border: none;
   outline: none;
   padding: 10px 12px;
   resize: none;
   font-family: var(--font-mono);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 20px;
   tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 /* empty / error */
@@ -709,6 +714,69 @@ select.btn {
 @keyframes detail-fade {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* ============ Generate dialog ============ */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 100;
+  animation: detail-fade 0.15s ease;
+}
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  z-index: 110;
+  min-width: 300px;
+  animation: dialog-pop 0.15s ease;
+}
+@keyframes dialog-pop {
+  from { transform: translate(-50%, -50%) scale(0.96); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.dialog-head {
+  font-size: 15px;
+  font-weight: 600;
+  padding: 14px 16px 0;
+}
+.dialog-body {
+  padding: 14px 16px;
+}
+.dialog-label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.dialog-input {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  box-sizing: border-box;
+}
+.dialog-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 16px 14px;
 }
 .detail-panel-head {
   display: flex;

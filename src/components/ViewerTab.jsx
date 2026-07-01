@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { parseJSON, formatJSON, minifyJSON, byteSize, formatBytes, pathToString, countNodes, depthOf, computeStats, searchInJSON, generateArrayChunked } from '../lib/utils.js'
+import { Generate as generatePayments } from '../lib/generate-payments.js'
 import { SAMPLE_JSON, SAMPLE_LIST } from '../lib/samples.js'
 import Editor from './Editor.jsx'
 import JsonText from './JsonText.jsx'
@@ -149,19 +150,50 @@ export default function ViewerTab() {
     }
   }, [])
 
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false)
+
   const onGenerateArray = useCallback(() => {
     if (!parsed.ok || wasLarge || generating) return
-    const inputCount = window.prompt('How many items to generate?', '10')
-    if (inputCount === null) return
-    const count = parseInt(inputCount, 10)
+    setShowGenerateDialog(true)
+  }, [parsed, wasLarge, generating])
+
+  const onGenerateConfirm = useCallback((count) => {
+    setShowGenerateDialog(false)
     if (!Number.isFinite(count) || count < 1) return
 
     setGenerating(true)
     setGeneratingProgress(0)
 
+    const PAYMENT_LOWER = ['createpayments', 'capturepayments', 'refundpayments', 'cancelpayment']
+    const data = parsed.data
+    const hasPaymentArray = data && typeof data === 'object' && !Array.isArray(data) && data.header &&
+      Object.keys(data).some(k => PAYMENT_LOWER.includes(k.toLowerCase()) && Array.isArray(data[k]) && data[k].length > 0)
+    if (hasPaymentArray) {
+      setTimeout(() => {
+        const result = generatePayments(JSON.stringify(data), count)
+        if (result.error) {
+          setGenerating(false)
+          return
+        }
+        const text = JSON.stringify(result, null, indent)
+        if (text.length > LARGE_BYTES) {
+          fileTextRef.current = text
+          setInput(`// Generated ${count} items (${formatBytes(text.length)})\n// Warning: Data too large to display in editor. Showing tree view.\n`)
+          setParsed({ ok: true, data: result, error: null, empty: false })
+          setWasLarge(true)
+          setView('tree')
+          requestAnimationFrame(() => setWorkerStats(computeStats(result)))
+        } else {
+          setInput(text)
+        }
+        setGenerating(false)
+      }, 0)
+      return
+    }
+
     const CHUNK_SIZE = count > 10000 ? 2000 : 500
 
-    generateArrayChunked(parsed.data, count, CHUNK_SIZE, (done, total) => {
+    generateArrayChunked(data, count, CHUNK_SIZE, (done, total) => {
       setGeneratingProgress(Math.round((done / total) * 100))
     }).then((arr) => {
       setTimeout(() => {
@@ -444,6 +476,14 @@ export default function ViewerTab() {
         />
       )}
 
+      {showGenerateDialog && (
+        <GenerateDialog
+          defaultValue={10}
+          onConfirm={onGenerateConfirm}
+          onCancel={() => setShowGenerateDialog(false)}
+        />
+      )}
+
       <footer className="statusbar">
         <div className={'status-validity ' + (isParsing ? 'muted' : isGenerating ? 'muted' : parsed.empty ? 'muted' : parsed.ok ? 'ok' : 'err')}>
           {isParsing ? '○ Parsing…' : isGenerating ? '○ Generating…' : parsed.empty ? '○ Empty' : parsed.ok ? '● Valid JSON' : '✕ Invalid JSON'}
@@ -521,6 +561,55 @@ function DetailPanel({ parsed, selectedPath, selectedValue, onClose }) {
           )}
         </div>
       </aside>
+    </>
+  )
+}
+
+function GenerateDialog({ defaultValue, onConfirm, onCancel }) {
+  const [value, setValue] = useState(String(defaultValue))
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+    inputRef.current?.select()
+  }, [])
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      const num = parseInt(value, 10)
+      if (Number.isFinite(num) && num > 0) onConfirm(num)
+    }
+    if (e.key === 'Escape') onCancel()
+  }
+
+  return (
+    <>
+      <div className="dialog-backdrop" onClick={onCancel} />
+      <div className="dialog" role="dialog" aria-label="Generate items">
+        <div className="dialog-head">Generate items</div>
+        <div className="dialog-body">
+          <label className="dialog-label">Number of items to generate:</label>
+          <input
+            ref={inputRef}
+            type="number"
+            className="dialog-input"
+            min="1"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+        <div className="dialog-actions">
+          <button className="btn" onClick={onCancel}>Cancel</button>
+          <button
+            className="btn primary"
+            onClick={() => {
+              const num = parseInt(value, 10)
+              if (Number.isFinite(num) && num > 0) onConfirm(num)
+            }}
+          >Generate</button>
+        </div>
+      </div>
     </>
   )
 }
